@@ -124,3 +124,24 @@ test('loads both DTEK endpoints from the configured Worker without falling back 
     await settle();
     assert.ok(urls[2].startsWith('https://norivka-outages.example.workers.dev/data/outages.json?'));
 });
+
+for (const todayStatus of ['EmergencyShutdowns', 'ScheduleApplies', undefined]) {
+    test(`Yasno renders one notice only for today's emergency: ${todayStatus}`, async () => {
+        const data = { ...schedule, today: { status: todayStatus },
+            tomorrow: { status: 'EmergencyShutdowns' } };
+        const { context, notice } = createApp(async url => response(
+            url.includes('dtek-address') ? warning : data));
+        await settle();
+        vm.runInContext("switchDataSource('yasno')", context);
+        await settle();
+        assert.equal(notice.hidden, todayStatus !== 'EmergencyShutdowns');
+        if (todayStatus === 'EmergencyShutdowns') {
+            assert.equal(noticeText(notice).split('Екстрені відключення').length - 1, 1);
+            await vm.runInContext('loadSchedule()', context);
+            assert.equal(notice.hidden, false);
+            data.today.status = 'ScheduleApplies';
+            await vm.runInContext('loadSchedule()', context);
+            assert.equal(notice.hidden, true);
+        }
+    });
+}

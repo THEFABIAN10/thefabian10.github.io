@@ -128,10 +128,7 @@ function renderDtekNotice(data) {
 }
 
 async function loadDtekNotice(source) {
-    if (source !== 'dtek') {
-        renderDtekNotice(null);
-        return;
-    }
+    if (source !== 'dtek') return;
     try {
         const response = await fetch(dataUrl(DTEK_ADDRESS_URL) + '?t=' + Date.now());
         if (!response.ok) throw new Error('Failed to load DTEK address information');
@@ -153,6 +150,10 @@ async function loadScheduleData(source) {
         if (source !== currentDataSource) return;
         currentData = data;
         renderSchedule(data);
+        if (source === 'yasno') {
+            renderDtekNotice(data.today?.status === 'EmergencyShutdowns'
+                ? { sub_type: 'Екстрені відключення', lastUpdate: data.lastUpdate } : null);
+        }
         updateDataSourceIndicator(source);
         
     } catch (error) {
@@ -181,6 +182,7 @@ function updateDataSourceIndicator(source) {
 function switchDataSource(source) {
     if (source !== currentDataSource && DATA_URLS[source]) {
         currentDataSource = source;
+        renderDtekNotice(null);
         loadSchedule(source);
         
         // Update button states
