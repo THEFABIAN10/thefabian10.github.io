@@ -1,45 +1,75 @@
-# Графіки відключень — Норівка
+# Графік відключень Норівка
 
-Статичний сайт https://norivka.github.io/ для черги 1.1 Дніпровських
-електромереж та адреси с. Любимівка, вул. Центральна, будинок 1.
+Єдиний репозиторій для сайту, збору даних, push-сповіщень і коду Worker.
+Сайт: https://norivka.github.io/
 
-## Дані
+## Як працює оновлення
 
-Сайт читає JSON зі свого домену (`data-config.js`):
+Cloudflare Worker `norivka-outages` кожні 5 хвилин запускає
+`.github/workflows/update-outages.yml`. Workflow у цьому публічному репозиторії
+отримує ДТЕК і ЯСНО, зберігає дані та підтверджений стан сповіщень у гілці
+`outage-state`, публікує JSON у `main/data/` і явно запускає `pages.yml`.
+Після перевірки, що JSON вже доступні на сайті, надсилає push за наявності змін.
+Сам Worker лише запускає workflow; старі адреси його JSON перенаправляють на сайт.
 
-- `data/dtek-outages.json` — графік ДТЕК.
-- `data/dtek-address.json` — адресне повідомлення ДТЕК.
-- `data/outages.json` — графік і статус сьогодні ЯСНО.
+GitHub Actions використовує стандартний Ubuntu runner публічного репозиторію.
+Окремого токена для публікації немає: автоматичний `GITHUB_TOKEN` має
+`contents: write` і `actions: write`. Явний запуск Pages потрібен, бо push,
+зроблений `GITHUB_TOKEN`, не запускає workflow з подією `push`.
 
-Workflow у приватному `norivka/outages` отримує й обробляє дані, записує ці
-файли в цей репозиторій і чекає їх публікації перед надсиланням push.
-Cloudflare Worker лише запускає цей workflow кожні 5 хвилин.
-Час запуску Actions і публікації Pages додається до цього інтервалу.
-Невдалий запит до джерела зберігає останні валідні дані та їхній час оновлення.
-Стан сповіщень зберігається приватно в гілці `outage-state` репозиторію outages.
+## Структура
 
-Сторінка оновлюється кожні 5 хвилин, поки видима, та після повернення до неї.
-Workflow `Publish site` публікує Pages, `Test site` перевіряє frontend.
-Окремий Pages workflow підтримує регулярні оновлення без м'якого ліміту
-стандартної публікації 10 збірок на годину.
+- `index.html`, `app.js`, `data-config.js`: сторінка та завантаження JSON.
+- `data/`: три публічні JSON (графіки ДТЕК, адресна інформація ДТЕК, ЯСНО).
+- `push-notifications.js`, `OneSignalSDKWorker.js`: підписка користувачів на push.
+- `automation/`: парсери, сповіщення, код Worker та тести.
+- гілка `outage-state`: дані й підтверджені ревізії сповіщень; секретів немає.
 
-## Push
+Якщо графік старший за 15 хвилин, сторінка показує попередження над ним.
+Адресне попередження показується внизу адресного блоку без префікса.
+Після тимчасового збою мережі останній завантажений графік залишається видимим.
 
-Підпискою й доставкою керує OneSignal. Домен та App ID не змінені;
-повторна підписка не потрібна. Секретів у цьому репозиторії немає.
-Заголовки — ДТЕК/ЯСНО, текст події й час — у тілі, TTL — 2 години.
-Сповіщення ДТЕК: графіки, поява/зміна адресного повідомлення, зникнення
-аварійного чи екстреного повідомлення. Зміни часу стабілізаційного повідомлення
-не створюють повторного push. Для ЯСНО — поява/зникнення EmergencyShutdowns
-лише за today. Незмінний стан не створює повторних push.
-
-На iPhone/iPad додайте сайт на початковий екран і ввімкніть сповіщення звідти.
-
-## Розробка
+## Перевірки та локальна робота
 
 ```sh
 node --test *.test.js
-python3 -m http.server 8000
+cd automation
+npm ci
+npm run check
 ```
 
-Локально JSON читаються з `data/`; секрети або backend не потрібні.
+Для Worker використовується `automation/cloudflare.config.ts` і Cloudflare CLI:
+
+```sh
+cd automation
+node scripts/prepare-secrets.mjs
+npm run deploy -- --secrets-file .dev.vars.deploy.json
+node scripts/admin.mjs status
+node scripts/admin.mjs dispatch
+```
+
+У Cloudflare Builds: репозиторій `norivka/norivka.github.io`, гілка `main`,
+кореневий каталог `automation`, build `npm run build`, deploy `npm run deploy`.
+Зміни лише `data/` не повинні перевипускати Worker; фільтр — `automation/**`.
+Деплой Worker виконується Cloudflare Builds, не GitHub Actions.
+
+## Секрети
+
+- Worker: `GITHUB_ACTIONS_TOKEN`, fine-grained токен лише цього репозиторію з
+  **Actions: Read and write**, та `ADMIN_TOKEN` для ручного запуску.
+- GitHub Actions: `ONESIGNAL_REST_API_KEY`.
+- `push-config.json` містить публічні App ID та URL, не секретний ключ.
+
+Локальні `.dev.vars` і `.dev.vars.deploy.json` не комітяться. Секрети та приватні
+файли не входять до артефакту Pages; workflow публікує лише перелік файлів сайту.
+
+## Контроль збоїв
+
+`check-update-health.yml` незалежно від Worker кожні 15 хвилин перевіряє
+запуски оновлення, три послідовні невдачі та вік кожного JSON (поріг 20 хвилин).
+Розклад GitHub може затримуватися. Для листів увімкніть у
+https://github.com/settings/notifications:
+**System → Actions → Email → Only notify for failed workflows**.
+Це особисте налаштування, його неможливо ввімкнути файлом репозиторію.
+
+Подробиці формування сповіщень і роботи автоматизації — [automation/README.md](automation/README.md).

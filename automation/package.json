@@ -1,0 +1,23 @@
+{
+  "name": "norivka-outages",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "cf dev",
+    "build": "cf build",
+    "deploy": "cf deploy --mode live",
+    "typecheck": "cf workers types && tsc",
+    "test": "vitest run",
+    "test:core": "node --test lib/*.test.js",
+    "check": "npm run test:core && npm run typecheck && npm test && npm run build",
+    "deploy:shadow": "cf deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "beta",
+    "@cloudflare/vitest-plugin": "^1.5.1",
+    "cf": "^1.0.0-beta.27",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^4.1.12"
+  }
+}
