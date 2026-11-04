@@ -181,6 +181,16 @@
             margin-top: 20px;
         }
 
+        #data-freshness {
+            background: #fff8e1;
+            border-left: 4px solid #f9a825;
+            border-radius: 8px;
+            color: #6d4c00;
+            padding: 16px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
         .address-notice {
             background: #fff3e0;
             border-left: 4px solid #e65100;
@@ -190,6 +200,13 @@
             margin-bottom: 20px;
             line-height: 1.6;
             overflow-wrap: anywhere;
+        }
+
+        .address-freshness {
+            border-top: 1px solid #edcba5;
+            margin-top: 12px;
+            padding-top: 12px;
+            font-weight: 600;
         }
 
         .address-notice-title {
@@ -229,6 +246,7 @@
             <button class="source-btn" data-source="yasno" onclick="switchDataSource('yasno')">ЯСНО</button>
         </div>
         
+        <div id="data-freshness" class="status warning" role="status" hidden></div>
         <div id="dtek-notice" class="address-notice" role="alert" hidden></div>
         <div id="content" class="loading">Завантаження...</div>
     </div>
@@ -239,7 +257,7 @@
     </div>
 
     <script src="data-config.js?v=2"></script>
-    <script src="app.js?v=3"></script>
+    <script src="app.js?v=4"></script>
     <script src="push-notifications.js?v=2"></script>
 </body>
 </html>

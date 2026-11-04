@@ -22,19 +22,20 @@ function element() {
 function createApp(fetch, dataBaseUrl = '') {
     const content = element();
     const notice = element();
+    const freshness = element();
     const context = vm.createContext({
         URLSearchParams,
         window: { location: { search: '' }, OUTAGE_DATA_BASE_URL: dataBaseUrl },
         fetch, console: { error() {} }, setInterval() {}, clearInterval() {},
         document: {
             hidden: true,
-            getElementById: id => ({ content, 'dtek-notice': notice }[id]),
+            getElementById: id => ({ content, 'dtek-notice': notice, 'data-freshness': freshness }[id]),
             createElement: element,
             addEventListener() {}, querySelectorAll: () => []
         }
     });
     vm.runInContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), context);
-    return { context, content, notice };
+    return { context, content, notice, freshness };
 }
 
 const response = data => ({ ok: true, json: async () => data });
@@ -145,3 +146,42 @@ for (const todayStatus of ['EmergencyShutdowns', 'ScheduleApplies', undefined]) 
         }
     });
 }
+
+test('staleness checks the active provider and DTEK address independently at the 15-minute boundary', async () => {
+    const timestamp = '2026-11-05T00:00:00Z';
+    const { context, freshness, notice } = createApp(async url => response(url.includes('dtek-address')
+        ? { ...warning, lastUpdate: timestamp } : { ...schedule, lastUpdate: timestamp }));
+    await settle();
+    vm.runInContext(`renderFreshness(Date.parse('${timestamp}') + 15 * 60000)`, context);
+    assert.equal(freshness.hidden, true);
+    vm.runInContext(`renderFreshness(Date.parse('${timestamp}') + 15 * 60000 + 1)`, context);
+    assert.match(freshness.textContent, /Графік/);
+    assert.match(notice.children.at(-1).textContent, /Дані не оновлювалися/);
+    assert.doesNotMatch(noticeText(notice), /Адресна інформація:/);
+    vm.runInContext(`freshness.dtek.schedule.lastUpdate = '2026-11-05T00:15:00Z'; renderFreshness(Date.parse('${timestamp}') + 16 * 60000)`, context);
+    assert.doesNotMatch(freshness.textContent, /Графік/);
+    assert.match(notice.children.at(-1).textContent, /Дані не оновлювалися/);
+    assert.doesNotMatch(noticeText(notice), /Адресна інформація:/);
+    await vm.runInContext("switchDataSource('yasno')", context);
+    await settle();
+    vm.runInContext(`renderFreshness(Date.parse('${timestamp}') + 16 * 60000)`, context);
+    assert.doesNotMatch(freshness.textContent, /Адресна інформація/);
+    assert.match(freshness.textContent, /Графік/);
+});
+
+test('temporary download failures retain the last schedule and show its actual age', async () => {
+    let failing = false;
+    const { context, content, freshness } = createApp(async url => {
+        if (failing) throw new Error('offline');
+        return response(url.includes('dtek-address') ? warning : {
+            ...schedule, days: [{ date: '2026-11-01', isToday: true, outages: [{ start: 60, end: 120 }] }]
+        });
+    });
+    await settle();
+    assert.match(content.innerHTML, /01:00 — 02:00/);
+    failing = true;
+    await vm.runInContext('loadSchedule()', context);
+    assert.match(content.innerHTML, /01:00 — 02:00/);
+    assert.equal(freshness.hidden, false);
+    assert.match(freshness.textContent, /понад 15 хвилин/);
+});
