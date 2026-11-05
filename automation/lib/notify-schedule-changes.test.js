@@ -25,7 +25,10 @@ test('address push uses the provider title and puts the message and Kyiv dates i
         const address = { sub_type, start_date: '10:05 10.11.2026', end_date: '09:38 11.11.2026' };
         const first = buildNotification('dtek', empty, { days: [] }, config, address);
         assert.deepEqual(first.payload.headings, { en: 'ДТЕК', uk: 'ДТЕК' });
-        assert.deepEqual(first.payload.contents, { en: `${sub_type[0].toLowerCase()}${sub_type.slice(1)}\n10.11 10:05 - 11.11 9:38`, uk: `${sub_type[0].toLowerCase()}${sub_type.slice(1)}\n10.11 10:05 - 11.11 9:38` });
+        const expected = sub_type.startsWith('Стабілізаційне')
+            ? 'відключення згідно графіку\n10:05 - 09:38'
+            : `${sub_type[0].toLowerCase()}${sub_type.slice(1)}\n10.11 10:05 - 11.11 9:38`;
+        assert.deepEqual(first.payload.contents, { en: expected, uk: expected });
     }
 });
 

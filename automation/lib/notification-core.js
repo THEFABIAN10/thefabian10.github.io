@@ -8,17 +8,19 @@ const SOURCES = {
 };
 const PUSH_SEGMENTS = ['Total Subscriptions'];
 
-function formatAddressTime(value) {
+function formatAddressTime(value, timeOnly = false) {
     // DTEK already supplies Kyiv wall time; do not reinterpret it as a UTC date.
     const match = /^(\d{1,2}):(\d{2}) (\d{1,2})\.(\d{1,2})\.\d{4}$/u.exec(value);
     if (!match) return value;
     const [, hour, minute, day, month] = match;
+    if (timeOnly) return `${hour.padStart(2, '0')}:${minute}`;
     return `${day.padStart(2, '0')}.${month.padStart(2, '0')} ${Number(hour)}:${minute}`;
 }
 
 function addressNotificationBody(notice) {
-    const start = formatAddressTime(notice.start_date);
-    const end = formatAddressTime(notice.end_date);
+    const timeOnly = isStabilizationNotice(notice);
+    const start = formatAddressTime(notice.start_date, timeOnly);
+    const end = formatAddressTime(notice.end_date, timeOnly);
     if (start && end) return `${start} - ${end}`;
     if (start) return `Початок: ${start}`;
     if (end) return `Завершення: ${end}`;
@@ -65,7 +67,8 @@ function buildNotification(source, previousState, data, config, addressData = nu
     const title = noticeKind
         ? (emergencyRemoved
             ? (/екстрен/iu.test(beforeNotice.sub_type) ? 'Скасовано екстрені відключення' : 'Скасовано аварійні відключення')
-            : nextNotice.sub_type || 'Повідомлення про відключення')
+            : isStabilizationNotice(nextNotice) ? 'відключення згідно графіку'
+                : nextNotice.sub_type || 'Повідомлення про відключення')
         : {
             published: 'нові графіки відключень',
             changed: 'зміни у графіках відключень',
