@@ -84,7 +84,7 @@ function buildNotification(source, previousState, data, config, addressData = nu
     return {
         state: { days: next, address: nextNotice, addressNotificationVersion: 1, revision: id },
         // Acknowledge every change so reappearance can trigger a new notification.
-        payload: !scheduleKind && !noticeKind ? null : {
+        payload: source === 'yasno' || (!scheduleKind && !noticeKind) ? null : {
             app_id: config.appId,
             included_segments: PUSH_SEGMENTS,
             target_channel: 'push',

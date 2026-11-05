@@ -24,3 +24,15 @@ test('both emergency DTEK notice types send cancellation once', () => {
         assert.equal(buildNotification('dtek', removed.state, { days: [] }, config), null);
     }
 });
+
+test('Yasno silently acknowledges emergency start, cancellation, and reappearance', () => {
+    let state = empty;
+    for (const status of ['EmergencyShutdowns', 'ScheduleApplies', 'EmergencyShutdowns']) {
+        const data = { days: [], today: { status } };
+        const change = buildNotification('yasno', state, data, config);
+        assert.equal(change.payload, null);
+        assert.notEqual(change.state.revision, state.revision);
+        state = change.state;
+        assert.equal(buildNotification('yasno', state, data, config), null);
+    }
+});

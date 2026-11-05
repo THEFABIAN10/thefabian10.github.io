@@ -64,25 +64,26 @@ test('persisted acknowledgements suppress repeated runs for both providers despi
         acknowledge: async (source, state) => { states[source] = JSON.parse(JSON.stringify(state)); },
     };
     assert.deepEqual(await notifySources(options), {});
-    assert.equal(sent.length, 2);
+    assert.equal(sent.length, 1);
     const acknowledged = structuredClone(states);
     for (let run = 1; run <= 3; run++) {
         for (const value of Object.values(data)) value.lastUpdate = `2026-11-05T00:${run}5:00Z`;
         assert.deepEqual(await notifySources(options), {});
         assert.deepEqual(states, acknowledged);
     }
-    assert.equal(sent.length, 2);
+    assert.equal(sent.length, 1);
     data['dtek-address.json'] = address;
     data['outages.json'].today.status = 'ScheduleApplies';
     await notifySources(options);
-    assert.equal(sent.length, 4); // One cancellation per provider.
+    assert.equal(sent.length, 2); // Only DTEK sends a cancellation.
+    assert.ok(sent.every(payload => payload.headings.uk === 'ДТЕК'));
     await notifySources(options);
-    assert.equal(sent.length, 4);
+    assert.equal(sent.length, 2);
     data['dtek-address.json'] = { ...address, sub_type: 'Екстрені відключення' };
     data['outages.json'].today.status = 'EmergencyShutdowns';
     await notifySources(options);
-    assert.equal(sent.length, 6);
-    assert.equal(new Set(sent.map(payload => payload.idempotency_key)).size, 6);
+    assert.equal(sent.length, 3);
+    assert.equal(new Set(sent.map(payload => payload.idempotency_key)).size, 3);
 });
 
 test('accepted push followed by failed state persistence retries with the same idempotency key', async () => {
