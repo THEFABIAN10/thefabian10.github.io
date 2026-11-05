@@ -34,11 +34,11 @@ test('address push uses the provider title and puts the message and Kyiv dates i
 
 test('address push labels a single time and handles missing times or message text', () => {
     for (const [start_date, end_date, expected] of [
-        ['10:05 10.11.2026', '', 'Початок: 10.11 10:05'],
-        ['', '09:38 11.11.2026', 'Завершення: 11.11 9:38'],
+        ['10:05 10.11.2026', '', 'початок: 10.11 10:05'],
+        ['', '09:38 11.11.2026', 'завершення: 11.11 9:38'],
         ['00:05 31.12.2026', '01:00 01.01.2027', '31.12 0:05 - 01.01 1:00'],
         ['', '', ''],
-        ['', 'До завершення робіт', 'Завершення: До завершення робіт']
+        ['', 'До завершення робіт', 'завершення: до завершення робіт']
     ]) {
         const address = { sub_type: 'Аварійне відключення', start_date, end_date };
         const notification = buildNotification('dtek', empty, { days: [] }, config, address);
@@ -49,7 +49,7 @@ test('address push labels a single time and handles missing times or message tex
         sub_type: '', start_date: '10:05 10.11.2026', end_date: ''
     });
     assert.equal(noText.payload.headings.uk, 'ДТЕК');
-    assert.equal(noText.payload.contents.uk, 'повідомлення про відключення\nПочаток: 10.11 10:05');
+    assert.equal(noText.payload.contents.uk, 'повідомлення про відключення\nпочаток: 10.11 10:05');
 });
 
 test('address updates keep the source title and show the updated interval', () => {

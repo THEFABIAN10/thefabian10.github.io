@@ -75,9 +75,9 @@ function buildNotification(source, previousState, data, config, addressData = nu
             cancelled: 'скасовано графіки відключень'
         }[scheduleKind];
     const heading = SOURCES[source].name;
-    const message = (title ?? '').replace(/\p{L}/u, letter => letter.toLocaleLowerCase('uk-UA'));
+    const message = title ?? '';
     const times = noticeKind ? addressNotificationBody(nextNotice) : '';
-    const body = [message, times].filter(Boolean).join('\n');
+    const body = [message, times].filter(Boolean).join('\n').toLocaleLowerCase('uk-UA');
     const url = new URL(config.siteUrl);
     if (url.protocol !== 'https:') throw new Error('Notification URL must use HTTPS');
     url.searchParams.set('source', source);
