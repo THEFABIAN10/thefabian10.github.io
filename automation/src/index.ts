@@ -73,7 +73,7 @@ export default {
         return json({ error: 'Not found' }, 404);
     },
     async scheduled(controller, env) {
-        if (controller.cron !== '*/5 * * * *') throw new Error('Unknown cron schedule');
+        if (controller.cron !== '*/6 * * * *') throw new Error('Unknown cron schedule');
         await dispatchUpdate(env);
     },
 } satisfies ExportedHandler<Env>;

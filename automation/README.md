@@ -1,11 +1,11 @@
 # norivka-outages
 
 Приватна обробка графіків для https://norivka.github.io/.
-Worker `norivka-outages` лише запускає GitHub Actions кожні 5 хвилин.
+Worker `norivka-outages` лише запускає GitHub Actions кожні 6 хвилин.
 
 ## Виконання
 
-1. Cloudflare Cron `*/5 * * * *` викликає GitHub API `workflow_dispatch`
+1. Cloudflare Cron `*/6 * * * *` викликає GitHub API `workflow_dispatch`
    для `.github/workflows/update-outages.yml`, гілка `main`, `notify: true`.
 2. Actions отримує графік ДТЕК, адресне повідомлення та Yasno через HTTP,
    обробляє їх спільними парсерами і зберігає JSON у гілці `outage-state`.

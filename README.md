@@ -5,7 +5,7 @@
 
 ## Як працює оновлення
 
-Cloudflare Worker `norivka-outages` кожні 5 хвилин запускає
+Cloudflare Worker `norivka-outages` кожні 6 хвилин запускає
 `.github/workflows/update-outages.yml`. Workflow у цьому публічному репозиторії
 отримує ДТЕК і ЯСНО, зберігає дані та підтверджений стан сповіщень у гілці
 `outage-state`, публікує JSON у `main/data/` і явно запускає `pages.yml`.

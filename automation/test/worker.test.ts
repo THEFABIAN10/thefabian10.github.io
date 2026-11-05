@@ -8,7 +8,7 @@ it('cron dispatches only the configured workflow with push enabled', async () =>
     const mock = vi.spyOn(globalThis, 'fetch')
         .mockResolvedValueOnce(Response.json({ workflow_runs: [{ status: 'completed' }] }))
         .mockResolvedValueOnce(new Response(null, { status: 204 }));
-    await worker.scheduled({ cron: '*/5 * * * *' } as ScheduledController, env, {} as ExecutionContext);
+    await worker.scheduled({ cron: '*/6 * * * *' } as ScheduledController, env, {} as ExecutionContext);
     expect(mock).toHaveBeenCalledTimes(2);
     expect(String(mock.mock.calls[1][0])).toBe('https://api.github.com/repos/norivka/norivka.github.io/actions/workflows/update-outages.yml/dispatches');
     const init = mock.mock.calls[1][1];

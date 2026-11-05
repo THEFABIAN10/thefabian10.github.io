@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => ({
             SCHEDULER_ENABLED: bindings.text(mode === 'live' ? 'true' : 'false'),
         },
         exports: { OutageFeed: exports.durableObject({ storage: 'sqlite' }) },
-        triggers: [triggers.scheduled({ schedule: '*/5 * * * *' })],
+        triggers: [triggers.scheduled({ schedule: '*/6 * * * *' })],
         observability: {
             enabled: true,
             logs: { enabled: true, headSamplingRate: 1 },
