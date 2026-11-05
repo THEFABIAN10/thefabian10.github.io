@@ -8,14 +8,16 @@
 Cloudflare Worker `norivka-outages` кожні 6 хвилин запускає
 `.github/workflows/update-outages.yml`. Workflow у цьому публічному репозиторії
 отримує ДТЕК і ЯСНО, зберігає дані та підтверджений стан сповіщень у гілці
-`outage-state`, публікує JSON у `main/data/` і явно запускає `pages.yml`.
-Після перевірки, що JSON вже доступні на сайті, надсилає push за наявності змін.
+`outage-state`, публікує JSON у `main/data/` і запитує стандартну збірку GitHub Pages.
+Окремий `notify-outages.yml` запускається лише після успішного
+`pages-build-deployment` для `main`, перевіряє опубліковані JSON і надсилає push.
 Сам Worker лише запускає workflow; старі адреси його JSON перенаправляють на сайт.
 
 GitHub Actions використовує стандартний Ubuntu runner публічного репозиторію.
 Окремого токена для публікації немає: автоматичний `GITHUB_TOKEN` має
-`contents: write` і `actions: write`. Явний запуск Pages потрібен, бо push,
-зроблений `GITHUB_TOKEN`, не запускає workflow з подією `push`.
+`contents: write` і `pages: write`. Явний запуск Pages потрібен, бо push,
+зроблений `GITHUB_TOKEN`, не запускає автоматичну збірку Pages. Використовується `POST /repos/{owner}/{repo}/pages/builds`.
+У Settings → Pages джерело: **Deploy from a branch**, **main / (root)**.
 
 ## Структура
 
@@ -61,7 +63,7 @@ node scripts/admin.mjs dispatch
 - `push-config.json` містить публічні App ID та URL, не секретний ключ.
 
 Локальні `.dev.vars` і `.dev.vars.deploy.json` не комітяться. Секрети та приватні
-файли не входять до артефакту Pages; workflow публікує лише перелік файлів сайту.
+файли не комітяться; `_config.yml` виключає автоматизацію, README і тести зі збірки Pages.
 
 ## Контроль збоїв
 

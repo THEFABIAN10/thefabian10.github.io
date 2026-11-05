@@ -25,9 +25,9 @@ function commit(dir, branch, paths, message) {
     git(dir, 'pull', '--rebase', 'origin', branch);
     git(dir, 'push', 'origin', `HEAD:${branch}`);
 }
-function loadData() {
-    return Object.fromEntries(Object.values(FILES).filter(file => existsSync(join(state, 'data', file)))
-        .map(file => [file, read(join(state, 'data', file))]));
+function loadData(root = state) {
+    return Object.fromEntries(Object.values(FILES).filter(file => existsSync(join(root, 'data', file)))
+        .map(file => [file, read(join(root, 'data', file))]));
 }
 if (phase === 'fetch') {
     const now = new Date();
@@ -36,27 +36,38 @@ if (phase === 'fetch') {
     });
     mkdirSync(join(state, 'data'), { recursive: true });
     for (const [file, data] of Object.entries(result.data)) write(join(state, 'data', file), data);
-    write(join(state, 'run.json'), { checkedAt: now.toISOString(), updated: result.updated, errors: result.errors });
+    write(join(state, 'run.json'), { checkedAt: now.toISOString(), updated: result.updated, errors: result.errors, notify: process.env.NOTIFY !== 'false' });
     commit(state, 'outage-state', ['data', 'run.json'], 'Update collected outage data');
     console.log(JSON.stringify({ updated: result.updated, errors: result.errors }));
 } else if (phase === 'publish') {
     mkdirSync(join(site, 'data'), { recursive: true });
     for (const file of Object.keys(loadData())) copyFileSync(join(state, 'data', file), join(site, 'data', file));
-    commit(site, 'main', ['data'], 'Update outage data');
-    // GITHUB_TOKEN pushes do not trigger push workflows. Dispatch Pages explicitly.
+    copyFileSync(join(state, 'run.json'), join(site, '.outage-run.json'));
+    commit(site, 'main', ['data', '.outage-run.json'], 'Update outage data');
+    // GITHUB_TOKEN pushes do not trigger branch-based Pages builds. Request one explicitly.
     if (!process.env.GITHUB_TOKEN) throw new Error('GITHUB_TOKEN is required to publish Pages');
-    const response = await fetch('https://api.github.com/repos/norivka/norivka.github.io/actions/workflows/pages.yml/dispatches', {
+    const response = await fetch('https://api.github.com/repos/norivka/norivka.github.io/pages/builds', {
         method: 'POST',
         headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json',
             'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2026-03-10', 'User-Agent': 'norivka-outages-publisher' },
-        body: JSON.stringify({ ref: 'main' }), signal: AbortSignal.timeout(20000),
+        signal: AbortSignal.timeout(20000),
     });
-    if (!response.ok) throw new Error(`Pages dispatch HTTP ${response.status}`);
+    if (!response.ok) throw new Error(`Pages build HTTP ${response.status}`);
     await response.body?.cancel();
-    console.log('Pages deployment dispatched');
+    console.log('Pages build requested');
+    if (Object.keys(read(join(state, 'run.json')).errors).length) process.exitCode = 1;
 } else {
-    const data = loadData();
-    const run = read(join(state, 'run.json'));
+    // Read the deployed snapshot, while acknowledgements use the latest state branch.
+    if (!existsSync(join(site, '.outage-run.json'))) {
+        console.log('No outage publication metadata in this deployment; skipping notifications');
+        process.exit(0);
+    }
+    const data = loadData(site);
+    const run = read(join(site, '.outage-run.json'));
+    if (phase === 'notify' && run.notify === false) {
+        console.log('Notifications disabled for this publication');
+        process.exit(0);
+    }
     let notificationErrors = {};
     if (phase === 'verify') await waitForPublication(data, config.siteUrl);
     else {

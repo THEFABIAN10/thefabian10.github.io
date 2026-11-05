@@ -10,8 +10,9 @@ Worker `norivka-outages` лише запускає GitHub Actions кожні 6 �
 2. Actions отримує графік ДТЕК, адресне повідомлення та Yasno через HTTP,
    обробляє їх спільними парсерами і зберігає JSON у гілці `outage-state`.
 3. Готові JSON комітяться в `data/` репозиторію `norivka/norivka.github.io`.
-   Його workflow `Publish site` публікує GitHub Pages.
-4. Actions перевіряє, що JSON уже доступні на публічному сайті, потім надсилає
+   Actions запитує `POST /repos/{owner}/{repo}/pages/builds`;
+   стандартний `pages-build-deployment` публікує `main / (root)`.
+4. Окремий `notify-outages.yml` після успішного `pages-build-deployment` перевіряє, що JSON уже доступні на публічному сайті, потім надсилає
    push через OneSignal і комітить підтверджений стан у `outage-state`.
 
 Публічні файли:
@@ -65,7 +66,11 @@ Payload не задає іконок; платформа або налаштув
 
 Під час міграції підтверджені стани перенесено зі старих Durable Objects,
 а старий відправник вимкнено до ввімкнення нового. `notify: false` у ручному
-запуску перевіряє публікацію, але не надсилає і не підтверджує сповіщень.
+запуску зберігається в `.outage-run.json` разом із даними публікації;
+workflow сповіщень пропускає такий деплой і не підтверджує сповіщень.
+Дані й метадані беруться з `head_sha` завершеної збірки, а підтверджений
+стан — з актуальної `outage-state`. Обидва workflows мають спільну concurrency group.
+Деплої без `.outage-run.json` пропускаються до першого оновлення даних.
 
 ## Секрети
 
@@ -74,7 +79,7 @@ Payload не задає іконок; платформа або налаштув
 - Worker `GITHUB_ACTIONS_TOKEN`: лише `norivka/norivka.github.io`, **Actions: Read and write**.
 - Actions secret `ONESIGNAL_REST_API_KEY`: ключ застосунку OneSignal.
 - `GITHUB_TOKEN`, виданий самому workflow: **Contents: write** для `outage-state`
-  і `main/data/`, **Actions: write** для явного запуску Pages у цьому репозиторії.
+  і `main/data/`, **Pages: write** для явного запуску Pages у цьому репозиторії.
 - Worker `ADMIN_TOKEN`: захищає ручний `/admin/dispatch`.
 
 Значення зберігаються в secrets, не в git. Локально — `.dev.vars` і

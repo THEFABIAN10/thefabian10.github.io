@@ -8,7 +8,7 @@ on:
         default: true
 permissions:
   contents: write
-  actions: write
+  pages: write
 concurrency:
   group: outage-data-update
   cancel-in-progress: false
@@ -31,16 +31,10 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - name: Fetch and save data (keep previous data on source failures)
+        env:
+          NOTIFY: ${{ inputs.notify }}
         run: node site/automation/scripts/update-github.mjs fetch state site
-      - name: Publish JSON and dispatch Pages
+      - name: Publish JSON and request Pages build
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node site/automation/scripts/update-github.mjs publish state site
-      - name: Confirm public data without sending push
-        if: ${{ !inputs.notify }}
-        run: node site/automation/scripts/update-github.mjs verify state site
-      - name: Confirm publication and send notifications
-        if: ${{ inputs.notify }}
-        env:
-          ONESIGNAL_REST_API_KEY: ${{ secrets.ONESIGNAL_REST_API_KEY }}
-        run: node site/automation/scripts/update-github.mjs notify state site

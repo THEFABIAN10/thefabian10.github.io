@@ -1,0 +1,35 @@
+name: Notify outage changes
+on:
+  workflow_run:
+    workflows: [pages-build-deployment]
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: write
+concurrency:
+  group: outage-data-update
+  cancel-in-progress: false
+jobs:
+  notify:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          path: site
+      - uses: actions/checkout@v7
+        with:
+          ref: outage-state
+          path: state
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Confirm publication and send notifications
+        env:
+          ONESIGNAL_REST_API_KEY: ${{ secrets.ONESIGNAL_REST_API_KEY }}
+        run: node site/automation/scripts/update-github.mjs notify state site

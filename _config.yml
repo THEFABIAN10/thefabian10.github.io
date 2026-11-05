@@ -1,0 +1,5 @@
+# Branch-based Pages uses Jekyll; publish only the site's public assets.
+exclude:
+  - automation
+  - README.md
+  - "*.test.js"
