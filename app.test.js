@@ -147,7 +147,7 @@ for (const todayStatus of ['EmergencyShutdowns', 'ScheduleApplies', undefined]) 
     });
 }
 
-test('staleness checks the active provider and DTEK address independently at the 15-minute boundary', async () => {
+test('staleness warns only for the active schedule at the 15-minute boundary without a prefix', async () => {
     const timestamp = '2026-11-05T00:00:00Z';
     const { context, freshness, notice } = createApp(async url => response(url.includes('dtek-address')
         ? { ...warning, lastUpdate: timestamp } : { ...schedule, lastUpdate: timestamp }));
@@ -155,18 +155,16 @@ test('staleness checks the active provider and DTEK address independently at the
     vm.runInContext(`renderFreshness(Date.parse('${timestamp}') + 15 * 60000)`, context);
     assert.equal(freshness.hidden, true);
     vm.runInContext(`renderFreshness(Date.parse('${timestamp}') + 15 * 60000 + 1)`, context);
-    assert.match(freshness.textContent, /Графік/);
-    assert.match(notice.children.at(-1).textContent, /Дані не оновлювалися/);
-    assert.doesNotMatch(noticeText(notice), /Адресна інформація:/);
+    assert.equal(freshness.textContent, 'Дані не оновлювалися понад 15 хвилин і можуть бути застарілими.');
+    assert.doesNotMatch(noticeText(notice), /Дані не оновлювалися/);
     vm.runInContext(`freshness.dtek.schedule.lastUpdate = '2026-11-05T00:15:00Z'; renderFreshness(Date.parse('${timestamp}') + 16 * 60000)`, context);
-    assert.doesNotMatch(freshness.textContent, /Графік/);
-    assert.match(notice.children.at(-1).textContent, /Дані не оновлювалися/);
-    assert.doesNotMatch(noticeText(notice), /Адресна інформація:/);
+    assert.equal(freshness.hidden, true);
+    assert.doesNotMatch(noticeText(notice), /Дані не оновлювалися/);
     await vm.runInContext("switchDataSource('yasno')", context);
     await settle();
     vm.runInContext(`renderFreshness(Date.parse('${timestamp}') + 16 * 60000)`, context);
     assert.doesNotMatch(freshness.textContent, /Адресна інформація/);
-    assert.match(freshness.textContent, /Графік/);
+    assert.equal(freshness.textContent, 'Дані не оновлювалися понад 15 хвилин і можуть бути застарілими.');
 });
 
 test('temporary download failures retain the last schedule and show its actual age', async () => {

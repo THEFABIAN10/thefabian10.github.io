@@ -17,15 +17,14 @@ function renderFreshness(now = Date.now()) {
     const banner = document.getElementById('data-freshness');
     const keys = ['schedule'];
     if (currentDataSource === 'dtek' && freshness.dtek.address) {
-        renderDtekNotice(freshness.dtek.address, true, now);
+        renderDtekNotice(freshness.dtek.address);
     }
-    const labels = { schedule: 'Графік', address: 'Адресна інформація' };
     const messages = keys.flatMap(key => {
         const value = freshness[currentDataSource][key];
         if (!value) return [];
         const timestamp = Date.parse(value.lastUpdate);
-        if (!Number.isFinite(timestamp)) return [`${labels[key]}: час останнього оновлення невідомий.`];
-        if (now - timestamp > STALE_AFTER_MS) return [`${labels[key]}: дані не оновлювалися понад 15 хвилин і можуть бути застарілими.`];
+        if (!Number.isFinite(timestamp)) return ['Час останнього оновлення невідомий.'];
+        if (now - timestamp > STALE_AFTER_MS) return ['Дані не оновлювалися понад 15 хвилин і можуть бути застарілими.'];
         return [];
     });
     banner.textContent = messages.join(' ');
@@ -125,14 +124,12 @@ function formatAddressDate(value) {
     return `${day}.${month}.${year}, ${hour}:${minute}`;
 }
 
-function renderDtekNotice(data, checkFreshness = false, now = Date.now()) {
+function renderDtekNotice(data) {
     const notice = document.getElementById('dtek-notice');
     notice.replaceChildren();
     const fields = [data?.sub_type, data?.start_date, data?.end_date];
     const hasNotice = fields.some(value => typeof value === 'string' && value.trim());
-    const updatedAt = Date.parse(data?.lastUpdate);
-    const stale = checkFreshness && (!Number.isFinite(updatedAt) || now - updatedAt > STALE_AFTER_MS);
-    notice.hidden = !hasNotice && !stale;
+    notice.hidden = !hasNotice;
     if (notice.hidden) return;
 
     function addLine(text, className) {
@@ -150,9 +147,6 @@ function renderDtekNotice(data, checkFreshness = false, now = Date.now()) {
             new Date(data.lastUpdate).toLocaleString('uk-UA', { timeZone: 'Europe/Kyiv' });
         addLine(`Інформацію оновлено: ${updated}`, 'last-update');
     }
-    if (stale) addLine(Number.isFinite(updatedAt)
-        ? 'Дані не оновлювалися понад 15 хвилин і можуть бути застарілими.'
-        : 'Час останнього оновлення невідомий.', 'address-freshness');
 }
 
 async function loadDtekNotice(source) {
