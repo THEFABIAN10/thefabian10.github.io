@@ -10,8 +10,8 @@ Worker `norivka-outages` лише запускає GitHub Actions кожні 6 �
 2. Actions отримує графік ДТЕК, адресне повідомлення та Yasno через HTTP,
    обробляє їх спільними парсерами і зберігає JSON у гілці `outage-state`.
 3. Готові JSON комітяться в `data/` репозиторію `norivka/norivka.github.io`.
-   Actions запитує `POST /repos/{owner}/{repo}/pages/builds`;
-   стандартний `pages-build-deployment` публікує `main / (root)`.
+   Push у `main` автоматично запускає стандартний `pages-build-deployment`,
+   який публікує `main / (root)`. Додаткового запиту збірки через API немає.
 4. Окремий `notify-outages.yml` після успішного `pages-build-deployment` перевіряє, що JSON уже доступні на публічному сайті, потім надсилає
    push через OneSignal і комітить підтверджений стан у `outage-state`.
 
@@ -79,7 +79,7 @@ workflow сповіщень пропускає такий деплой і не �
 - Worker `GITHUB_ACTIONS_TOKEN`: лише `norivka/norivka.github.io`, **Actions: Read and write**.
 - Actions secret `ONESIGNAL_REST_API_KEY`: ключ застосунку OneSignal.
 - `GITHUB_TOKEN`, виданий самому workflow: **Contents: write** для `outage-state`
-  і `main/data/`, **Pages: write** для явного запуску Pages у цьому репозиторії.
+  і `main/data/`. Окремий дозвіл **Pages: write** не потрібен.
 - Worker `ADMIN_TOKEN`: захищає ручний `/admin/dispatch`.
 
 Значення зберігаються в secrets, не в git. Локально — `.dev.vars` і

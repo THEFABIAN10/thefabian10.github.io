@@ -44,17 +44,9 @@ if (phase === 'fetch') {
     for (const file of Object.keys(loadData())) copyFileSync(join(state, 'data', file), join(site, 'data', file));
     copyFileSync(join(state, 'run.json'), join(site, '.outage-run.json'));
     commit(site, 'main', ['data', '.outage-run.json'], 'Update outage data');
-    // GITHUB_TOKEN pushes do not trigger branch-based Pages builds. Request one explicitly.
-    if (!process.env.GITHUB_TOKEN) throw new Error('GITHUB_TOKEN is required to publish Pages');
-    const response = await fetch('https://api.github.com/repos/norivka/norivka.github.io/pages/builds', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json',
-            'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2026-03-10', 'User-Agent': 'norivka-outages-publisher' },
-        signal: AbortSignal.timeout(20000),
-    });
-    if (!response.ok) throw new Error(`Pages build HTTP ${response.status}`);
-    await response.body?.cancel();
-    console.log('Pages build requested');
+    // Branch-based Pages starts automatically when main is pushed.
+    // An additional POST /pages/builds would duplicate the same deployment.
+    console.log('Published outage data to main');
     if (Object.keys(read(join(state, 'run.json')).errors).length) process.exitCode = 1;
 } else {
     // Read the deployed snapshot, while acknowledgements use the latest state branch.

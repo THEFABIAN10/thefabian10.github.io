@@ -8,7 +8,6 @@ on:
         default: true
 permissions:
   contents: write
-  pages: write
 concurrency:
   group: outage-data-update
   cancel-in-progress: false
@@ -34,7 +33,5 @@ jobs:
         env:
           NOTIFY: ${{ inputs.notify }}
         run: node site/automation/scripts/update-github.mjs fetch state site
-      - name: Publish JSON and request Pages build
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+      - name: Publish JSON
         run: node site/automation/scripts/update-github.mjs publish state site

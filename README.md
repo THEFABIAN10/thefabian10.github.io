@@ -8,15 +8,15 @@
 Cloudflare Worker `norivka-outages` кожні 6 хвилин запускає
 `.github/workflows/update-outages.yml`. Workflow у цьому публічному репозиторії
 отримує ДТЕК і ЯСНО, зберігає дані та підтверджений стан сповіщень у гілці
-`outage-state`, публікує JSON у `main/data/` і запитує стандартну збірку GitHub Pages.
+`outage-state`, публікує JSON у `main/data/` і цим запускає стандартну збірку GitHub Pages.
 Окремий `notify-outages.yml` запускається лише після успішного
 `pages-build-deployment` для `main`, перевіряє опубліковані JSON і надсилає push.
 Сам Worker лише запускає workflow; старі адреси його JSON перенаправляють на сайт.
 
 GitHub Actions використовує стандартний Ubuntu runner публічного репозиторію.
 Окремого токена для публікації немає: автоматичний `GITHUB_TOKEN` має
-`contents: write` і `pages: write`. Явний запуск Pages потрібен, бо push,
-зроблений `GITHUB_TOKEN`, не запускає автоматичну збірку Pages. Використовується `POST /repos/{owner}/{repo}/pages/builds`.
+`contents: write`. Push у `main` автоматично запускає Pages; додатковий
+запит збірки через API не потрібен і створював би дубль.
 У Settings → Pages джерело: **Deploy from a branch**, **main / (root)**.
 
 ## Структура
