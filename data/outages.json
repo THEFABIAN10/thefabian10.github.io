@@ -1,27 +1,8 @@
 {
-  "lastUpdate": "2026-11-05T17:42:24.516Z",
-  "days": [
-    {
-      "date": "2026-11-05T00:00:00+02:00",
-      "isToday": true,
-      "outages": [
-        {
-          "start": 0,
-          "end": 150
-        },
-        {
-          "start": 540,
-          "end": 780
-        },
-        {
-          "start": 1170,
-          "end": 1440
-        }
-      ]
-    }
-  ],
+  "lastUpdate": "2026-11-05T17:48:26.652Z",
+  "days": [],
   "today": {
     "date": "2026-11-05T00:00:00+02:00",
-    "status": "ScheduleApplies"
+    "status": "EmergencyShutdowns"
   }
 }
