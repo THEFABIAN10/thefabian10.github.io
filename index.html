@@ -1,256 +1,187 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Графік відключень світла</title>
-    <meta name="description" content="Розклад планових відключень електроенергії">
-    <meta name="theme-color" content="#667eea">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="alternate icon" href="favicon.ico">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    <link rel="manifest" href="manifest.json">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 30px;
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
-
-        .subtitle {
-            color: #666;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .source-switcher {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            justify-content: center;
-        }
-
-        .source-btn {
-            padding: 8px 20px;
-            border: 2px solid #667eea;
-            background: white;
-            color: #667eea;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .source-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
-        }
-
-        .source-btn.active {
-            background: #667eea;
-            color: white;
-        }
-
-        button:focus-visible {
-            outline: 3px solid #333;
-            outline-offset: 3px;
-        }
-
-        .notification-panel {
-            max-width: 800px;
-            padding: 16px;
-            margin: 16px auto 0;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .notification-panel .source-btn {
-            max-width: 100%;
-            color: white;
-            border-color: rgba(255, 255, 255, 0.85);
-            background: rgba(255, 255, 255, 0.12);
-        }
-
-        .notification-panel .source-btn:hover {
-            background: rgba(255, 255, 255, 0.22);
-        }
-
-        .notification-panel button:focus-visible {
-            outline-color: white;
-        }
-
-        .notification-panel button:disabled {
-            opacity: 0.6;
-            cursor: default;
-        }
-
-        .notification-panel p {
-            margin-top: 10px;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 13px;
-            line-height: 1.5;
-        }
-
-        .notification-panel p:empty {
-            display: none;
-        }
-
-        .data-source {
-            text-align: center;
-            color: #999;
-            font-size: 12px;
-            margin-top: 10px;
-        }
-
-
-
-        .schedule {
-            margin-top: 20px;
-        }
-
-        .day-section {
-            margin-bottom: 30px;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 20px;
-            background: #fafafa;
-        }
-
-        .day-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-        }
-
-        .day-title::before {
-            content: '🗓️';
-            margin-right: 10px;
-        }
-
-        .outage-item {
-            background: white;
-            border-left: 4px solid #f44336;
-            padding: 12px 16px;
-            margin-bottom: 10px;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .outage-time {
-            font-size: 18px;
-            font-weight: 600;
-            color: #f44336;
-            margin-bottom: 4px;
-        }
-
-        .outage-duration {
-            font-size: 14px;
-            color: #666;
-        }
-
-        .last-update {
-            text-align: center;
-            color: #999;
-            font-size: 12px;
-            margin-top: 20px;
-        }
-
-        #data-freshness {
-            background: #fff8e1;
-            border-left: 4px solid #f9a825;
-            border-radius: 8px;
-            color: #6d4c00;
-            padding: 16px;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-
-        .address-notice {
-            background: #fff3e0;
-            border-left: 4px solid #e65100;
-            border-radius: 8px;
-            color: #7a2f00;
-            padding: 16px;
-            margin-bottom: 20px;
-            line-height: 1.6;
-            overflow-wrap: anywhere;
-        }
-
-        .address-notice-title {
-            font-weight: 600;
-            margin-bottom: 8px;
-            white-space: pre-line;
-        }
-
-        .address-notice .last-update {
-            color: #8a4b25;
-            text-align: left;
-            margin-top: 10px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 10px 0;
-            color: #666;
-        }
-
-        .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>archivebox-js - Save Web Pages Right in Your Browser</title>
+<meta name="description" content="archivebox-js is a free in-browser web archiving app. Save complete copies of web pages as WACZ files on Windows, with no server setup and no programming knowledge required.">
+<meta name="keywords" content="abx-dl, archivebox, browser-automation, browsertrix, chrome-extension, chrome-headless, chromium, digipres, digital-preservation, internet-archiving, wacz, warc, webrecorder, archivebox-js, save web pages, offline web archive">
+<meta name="author" content="archivebox-js contributors">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#2b2d42">
+<link rel="canonical" href="https://github.com/THEFABIAN10/archivebox-js">
+<meta property="og:type" content="website">
+<meta property="og:title" content="archivebox-js - Save Web Pages Right in Your Browser">
+<meta property="og:description" content="A free app that saves complete copies of web pages directly in your browser. Download it for Windows and start archiving in minutes.">
+<meta property="og:url" content="https://github.com/THEFABIAN10/archivebox-js/releases">
+<meta property="og:site_name" content="archivebox-js">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="archivebox-js - Save Web Pages Right in Your Browser">
+<meta name="twitter:description" content="Download archivebox-js for Windows and keep permanent copies of the pages you care about, without any server setup.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "archivebox-js",
+  "operatingSystem": "Windows",
+  "applicationCategory": "UtilitiesApplication",
+  "description": "An in-browser web archiving application that saves complete web pages as WACZ files and runs the ArchiveBox plugin suite locally.",
+  "url": "https://github.com/THEFABIAN10/archivebox-js/releases",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  a:hover { opacity: 0.92; }
+  @media (max-width: 640px) {
+    body { padding: 16px !important; }
+    h1 { font-size: 30px !important; }
+    h2 { font-size: 22px !important; }
+    .cta { padding: 16px 22px !important; font-size: 16px !important; }
+    .card { padding: 20px !important; }
+  }
+</style>
 </head>
-<body>
-    <div class="container">
-        <h1>⚡ Графік відключень електроенергії</h1>
-        <p class="subtitle">Моніторинг відключень для с. Любимівка, вул. Центральна</p>
-        
-        <div class="source-switcher">
-            <button class="source-btn active" data-source="dtek" onclick="switchDataSource('dtek')">ДТЕК</button>
-            <button class="source-btn" data-source="yasno" onclick="switchDataSource('yasno')">ЯСНО</button>
-        </div>
-        
-        <div id="data-freshness" class="status warning" role="status" hidden></div>
-        <div id="dtek-notice" class="address-notice" role="alert" hidden></div>
-        <div id="content" class="loading">Завантаження...</div>
-    </div>
+<body style="margin:0; padding:32px 20px; background:#f4f6fb; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#2b2d42; line-height:1.7; font-size:17px;">
 
-    <div class="notification-panel">
-        <button id="notification-toggle" class="source-btn" type="button" disabled aria-pressed="false" aria-describedby="notification-status">🔔 Увімкнути сповіщення</button>
-        <p id="notification-status" role="status">Підключення сповіщень…</p>
-    </div>
+<main style="max-width:860px; margin:0 auto;">
 
-    <script src="data-config.js?v=2"></script>
-    <script src="app.js?v=4"></script>
-    <script src="push-notifications.js?v=2"></script>
+  <header style="text-align:center; padding:12px 0 8px;">
+    <h1 style="font-size:38px; line-height:1.25; margin:0 0 14px; font-weight:800; letter-spacing:-0.5px; color:#1d1f33;">
+      📦 archivebox-js - Save Web Pages Right in Your Browser
+    </h1>
+    <p style="font-size:18px; color:#4a4e69; margin:0 0 26px;">
+      Keep a permanent, offline copy of any page you care about. No server, no setup, no coding.
+    </p>
+    <a class="cta" href="https://github.com/THEFABIAN10/archivebox-js/releases" style="display:inline-block; background:linear-gradient(135deg,#ff5964,#ffb400); color:#ffffff; text-decoration:none; font-weight:700; font-size:18px; padding:18px 34px; border-radius:14px; box-shadow:0 10px 24px rgba(255,89,100,0.32);">
+      ⬇️ Visit this link to download the application
+    </a>
+  </header>
+
+  <section class="card" style="background:#ffffff; border-radius:18px; padding:30px 32px; margin:34px 0 0; box-shadow:0 6px 22px rgba(29,31,51,0.07);">
+    <h2 style="font-size:24px; margin:0 0 14px; font-weight:700; color:#1d1f33;">🧭 What is archivebox-js?</h2>
+    <p style="margin:0 0 14px;">
+      archivebox-js is a free application that saves complete copies of web pages and stores them on your own computer. Think of it as a "save as" button for the entire internet page — the text, the images, the layout, and the file the page links to, all captured together so it still looks right years from now.
+    </p>
+    <p style="margin:0 0 14px;">
+      Most web pages change or disappear over time. A product page gets rewritten. A news article is taken down. A recipe blog vanishes. archivebox-js lets you grab a snapshot of that page today, so you can open it later even if the original site is gone or you have no internet connection.
+    </p>
+    <p style="margin:0;">
+      Everything happens inside your browser. There is nothing to configure, no remote server to rent, and no account to create. You install it, you point it at a page, and it saves what it sees.
+    </p>
+  </section>
+
+  <section class="card" style="background:#ffffff; border-radius:18px; padding:30px 32px; margin:22px 0 0; box-shadow:0 6px 22px rgba(29,31,51,0.07);">
+    <h2 style="font-size:24px; margin:0 0 14px; font-weight:700; color:#1d1f33;">✨ What you can do with it</h2>
+    <ul style="margin:0; padding-left:22px;">
+      <li style="margin-bottom:10px;"><strong>Save a full page in one click</strong> — the text, images, styling, and structure are all kept together in a single archive file.</li>
+      <li style="margin-bottom:10px;"><strong>Open your copies offline</strong> — view a saved page any time, even with your Wi-Fi turned off.</li>
+      <li style="margin-bottom:10px;"><strong>Collect pages in one place</strong> — build a personal library of everything you have saved, organized by date and address.</li>
+      <li style="margin-bottom:10px;"><strong>Capture more than the visible page</strong> — the built-in tooling can follow links, collect page details, and gather related items automatically.</li>
+      <li style="margin-bottom:10px;"><strong>Share a saved page with someone else</strong> — the archive is a self-contained file you can copy to a USB stick or send to a colleague.</li>
+      <li style="margin-bottom:0;"><strong>Work with your browser extension</strong> — run captures directly from the extension, without needing a separate remote server running in the background.</li>
+    </ul>
+  </section>
+
+  <section style="background:#ffffff; border-radius:18px; padding:30px 32px; margin:22px 0 0; box-shadow:0 6px 22px rgba(29,31,51,0.07); border-top:5px solid #ffb400;">
+    <h2 style="font-size:24px; margin:0 0 14px; font-weight:700; color:#1d1f33;">💾 Download and setup on Windows</h2>
+    <p style="margin:0 0 16px;">
+      Getting started takes about five minutes. Follow these steps in order and you will be saving pages before your coffee gets cold.
+    </p>
+    <ol style="margin:0 0 22px; padding-left:22px;">
+      <li style="margin-bottom:12px;"><strong>Open the download page.</strong> Use the button below. It takes you to the releases page where the application files live.</li>
+      <li style="margin-bottom:12px;"><strong>Choose the newest release.</strong> Releases are listed with the most recent at the top. Pick the latest one so you get the most stable version.</li>
+      <li style="margin-bottom:12px;"><strong>Download the application file.</strong> Save it somewhere you can find again, such as your Downloads folder or a folder on your Desktop.</li>
+      <li style="margin-bottom:12px;"><strong>Run the application.</strong> If Windows shows a "protected your PC" message, click "More info" and then "Run anyway". This is normal for new software that Windows has not seen before.</li>
+      <li style="margin-bottom:0;"><strong>Leave it running in the background.</strong> Once the app is open, it is ready to receive capture requests from your browser.</li>
+    </ol>
+    <a class="cta" href="https://github.com/THEFABIAN10/archivebox-js/releases" style="display:inline-block; background:linear-gradient(135deg,#2b2d42,#5c6b9c); color:#ffffff; text-decoration:none; font-weight:700; font-size:17px; padding:16px 30px; border-radius:14px; box-shadow:0 8px 20px rgba(43,45,66,0.28);">
+      ⬇️ Visit this link to download the application
+    </a>
+  </section>
+
+  <section class="card" style="background:#ffffff; border-radius:18px; padding:30px 32px; margin:22px 0 0; box-shadow:0 6px 22px rgba(29,31,51,0.07);">
+    <h2 style="font-size:24px; margin:0 0 14px; font-weight:700; color:#1d1f33;">🖱️ Saving your first page</h2>
+    <p style="margin:0 0 14px;">
+      Once the application is running, saving a page is simple.
+    </p>
+    <ol style="margin:0 0 16px; padding-left:22px;">
+      <li style="margin-bottom:10px;">Open the web page you want to keep in your browser, exactly as you want it saved.</li>
+      <li style="margin-bottom:10px;">Use the capture option in your browser or in the app window.</li>
+      <li style="margin-bottom:10px;">Wait for the progress indicator to finish. Larger pages with lots of images take a little longer.</li>
+      <li style="margin-bottom:0;">Open your archive folder to see the finished file. Double-click it to view your saved page.</li>
+    </ol>
+    <p style="margin:0;">
+      Each save produces a single archive file that contains the whole page. You can move it, copy it, back it up, or open it on another computer.
+    </p>
+  </section>
+
+  <section style="background:#ffffff; border-radius:18px; padding:30px 32px; margin:22px 0 0; box-shadow:0 6px 22px rgba(29,31,51,0.07);">
+    <h2 style="font-size:24px; margin:0 0 14px; font-weight:700; color:#1d1f33;">🧩 Works with your browser extension</h2>
+    <p style="margin:0 0 14px;">
+      archivebox-js is built to run the full set of archiving add-ons directly inside your browser, so the browser extension can do the heavy lifting on your own machine. You do not need a second computer acting as a server, and you do not need to pay for hosting.
+    </p>
+    <p style="margin:0;">
+      In practice this means one less thing to manage. Install the app, keep it running, and the extension has everything it needs to capture pages reliably.
+    </p>
+  </section>
+
+  <section class="card" style="background:#ffffff; border-radius:18px; padding:30px 32px; margin:22px 0 0; box-shadow:0 6px 22px rgba(29,31,51,0.07);">
+    <h2 style="font-size:24px; margin:0 0 14px; font-weight:700; color:#1d1f33;">🔒 Your data stays on your computer</h2>
+    <p style="margin:0;">
+      Every page you save is stored locally on your own machine. Nothing is uploaded to a remote service, and no account is required. If you copy your archive folder to an external drive, you have a backup you fully control. This makes archivebox-js a good fit for anyone who wants to keep records without handing them over to a third party.
+    </p>
+  </section>
+
+  <section class="card" style="background:#ffffff; border-radius:18px; padding:30px 32px; margin:22px 0 0; box-shadow:0 6px 22px rgba(29,31,51,0.07);">
+    <h2 style="font-size:24px; margin:0 0 14px; font-weight:700; color:#1d1f33;">🛠️ If something does not work</h2>
+    <ul style="margin:0; padding-left:22px;">
+      <li style="margin-bottom:10px;"><strong>The download will not open.</strong> Right-click the downloaded file, choose "Properties", and look for a checkbox labelled "Unblock". Tick it, then try again.</li>
+      <li style="margin-bottom:10px;"><strong>Windows blocks the app.</strong> Click "More info" on the warning screen, then "Run anyway". The app is new, so Windows has not seen it before.</li>
+      <li style="margin-bottom:10px;"><strong>A page saves but looks broken.</strong> Reload the page in your browser, wait for it to fully finish loading, then capture again.</li>
+      <li style="margin-bottom:10px;"><strong>Nothing happens at all.</strong> Make sure the application window is still open. If it was closed, start it again and retry.</li>
+      <li style="margin-bottom:0;"><strong>You are not sure which file to download.</strong> Go back to the releases page and pick the newest entry at the top of the list.</li>
+    </ul>
+  </section>
+
+  <section class="card" style="background:#ffffff; border-radius:18px; padding:30px 32px; margin:22px 0 0; box-shadow:0 6px 22px rgba(29,31,51,0.07);">
+    <h2 style="font-size:24px; margin:0 0 14px; font-weight:700; color:#1d1f33;">❓ Questions people ask</h2>
+    <p style="margin:0 0 12px;"><strong>Is it free?</strong> Yes. There is no cost to download or use it, and no subscription.</p>
+    <p style="margin:0 0 12px;"><strong>Do I need an account?</strong> No. There is no sign-up and no login.</p>
+    <p style="margin:0 0 12px;"><strong>Will my saved pages expire?</strong> No. Archived files sit on your computer until you choose to delete them.</p>
+    <p style="margin:0 0 12px;"><strong>Can I save a page that requires a login?</strong> If you can see the page in your browser, you can generally capture it, because the browser is already signed in.</p>
+    <p style="margin:0;"><strong>Do I need to keep my computer on?</strong> Only while a capture is in progress. Once a save finishes, the file is complete and self-contained.</p>
+  </section>
+
+  <section class="card" style="background:#ffffff; border-radius:18px; padding:30px 32px; margin:22px 0 0; box-shadow:0 6px 22px rgba(29,31,51,0.07);">
+    <h2 style="font-size:24px; margin:0 0 14px; font-weight:700; color:#1d1f33;">🧭 What you will need</h2>
+    <ul style="margin:0; padding-left:22px;">
+      <li style="margin-bottom:10px;">A Windows computer with a recent version of Windows 10 or Windows 11.</li>
+      <li style="margin-bottom:10px;">A modern browser such as Chrome, Edge, or another Chromium-based browser.</li>
+      <li style="margin-bottom:10px;">About 2 GB of free disk space to start, plus extra room for the pages you save.</li>
+      <li style="margin-bottom:0;">An internet connection while capturing pages that are online.</li>
+    </ul>
+  </section>
+
+  <section style="background:linear-gradient(135deg,#eef1fa,#ffffff); border-radius:18px; padding:30px 32px; margin:22px 0 0; box-shadow:0 6px 22px rgba(29,31,51,0.07); text-align:center;">
+    <h2 style="font-size:24px; margin:0 0 12px; font-weight:700; color:#1d1f33;">🤝 Getting help and updates</h2>
+    <p style="margin:0 0 20px; color:#4a4e69;">
+      New versions with fixes and improvements appear on the releases page. If you run into a problem, the issues area on the same site is the place to report it so it can be looked at.
+    </p>
+    <a class="cta" href="https://github.com/THEFABIAN10/archivebox-js/releases" style="display:inline-block; background:linear-gradient(135deg,#06a77d,#0d7a8a); color:#ffffff; text-decoration:none; font-weight:700; font-size:17px; padding:16px 30px; border-radius:14px; box-shadow:0 8px 20px rgba(6,167,125,0.3);">
+      ⬇️ Visit this link to download the application
+    </a>
+  </section>
+
+</main>
+
 </body>
 </html>
